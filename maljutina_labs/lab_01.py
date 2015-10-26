@@ -1,10 +1,10 @@
 import cv2 as cv
 import sys
 from matplotlib import pyplot as plt
-
+import numpy as np
 
 def average(img,dist):
-	ratio=1
+	ratio=0.7
 	rows,cols = img.shape	
 	max_dist =int (dist.max())
 	img_new = img.copy()
@@ -19,16 +19,22 @@ def average(img,dist):
 				min_x = min(rows-1,i+kernel/2)
 				max_y= max(0,j-kernel/2)
 
-				A = integral_img[max_x+1,max_y+1]
-				B = integral_img[min_x, max_y+1]
-				C = integral_img[max_x+1, min_y]
-				D = integral_img[min_x,min_y]
+				A = integral_img[max_x,max_y]
+				B = integral_img[min_x+1, max_y]
+				C = integral_img[max_x, min_y+1]
+				D = integral_img[min_x+1,min_y+1]
 				mean = A+D-C-B
-				mean = mean/(max_x - min_x+1)/(max_y- min_y+1)
-				img_new[i][j]=mean
+
+				mean_new =0				
+				for k in np.arange(max_x,min_x+1):
+					for l in np.arange (max_y,min_y+1):
+						mean_new+=img[k][l]
+				
+				if (mean_new == mean):
+					mean = mean/(min_x - max_x+1)/(min_y- max_y+1)
+					img_new[i][j]=mean
 			else:
 				img_new[i][j] = img[i][j]
-
 	return img_new
 
 
@@ -54,13 +60,10 @@ if __name__ == '__main__':
 			laplacian = cv.Laplacian(img_gray,cv.CV_64F)
 			sobelx = cv.Sobel(img_gray,cv.CV_64F,1,0,ksize=3)
 			sobely = cv.Sobel(img_gray,cv.CV_64F,0,1,ksize=3)
-
 			plt.subplot(2,3,3)
 			plt.imshow(laplacian,cmap = 'gray')
 			plt.xticks([]), plt.yticks([])
 			plt.title('Laplacian')
-
-
 			edges = cv.Canny(img_gray,100,200)
 			edges = 255 - edges
 			plt.subplot(2,3,3)
@@ -78,10 +81,6 @@ if __name__ == '__main__':
 			g=average(g,dist)
 			b=average(b,dist)
 			new_image=cv.merge((r,g,b))
-			
-			
-
-			
 			plt.subplot(2,3,5)
 			plt.xticks([]), plt.yticks([])
 			plt.imshow(new_image)
